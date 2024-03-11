@@ -72,4 +72,5 @@ def main():
     print(f"det: {det}")
     print(f"invert_matrix:\n{invert_matrix}")
 
+
 main()
