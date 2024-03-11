@@ -1,13 +1,10 @@
 import numpy as np
 
-def tridiagonal_solve(matrix, d) -> np.ndarray:
+def tridiagonal_solve(a, b, c, d) -> np.ndarray:
     n = len(d)
     p = np.ndarray(n, dtype=float)
     q = np.ndarray(n, dtype=float)
     x = np.ndarray(n, dtype=float)
-    a = np.array([0]+[matrix[i+1, i] for i in range(n-1)])
-    b = np.array([matrix[i, i] for i in range(n)])
-    c = np.array([matrix[i, i+1] for i in range(n-1)]+[0])
 
     p[0] = -c[0] / b[0]
     q[0] = d[0] / b[0]
@@ -23,15 +20,12 @@ def tridiagonal_solve(matrix, d) -> np.ndarray:
 
 
 def main():
-    matrix = np.array([
-        [-7, -6, 0, 0, 0],
-        [6, 12, 0, 0, 0],
-        [0, -3, 5, 0, 0],
-        [0, 0, -9, 21, 8],
-        [0, 0, 0, -4, -6]
-    ], dtype=float)
-    d = np.array([-75, 126, 13, -40, -24])
-    x = tridiagonal_solve(matrix, d)
-    print(x)
+    a = np.array(list(map(int, input().split())), dtype=float)
+    b = np.array(list(map(int, input().split())), dtype=float)
+    c = np.array(list(map(int, input().split())), dtype=float)
+    d = np.array(list(map(int, input().split())), dtype=float)
+    x = tridiagonal_solve(a, b, c, d)
+    print(f"x: {x}")
+
 
 main()

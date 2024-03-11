@@ -62,13 +62,9 @@ def invert(L: np.ndarray, U: np.ndarray) -> np.ndarray:
 
 
 def main():
-    A = np.array([
-        [-7, 3, -4, 7],
-        [8, -1, -7, 6],
-        [9, 9, 3, -6],
-        [-7, -9, -8, -5]
-    ], dtype=float)
-    b = np.array([-126, 29, 27, 34])
+    n = int(input())
+    A = np.array([list(map(int, input().split())) for _ in range(n)], dtype=float)
+    b = np.array(list(map(int, input().split())))
     L, U, det = LU_decompose(A)
     x = solve(L, U, b)
     invert_matrix = invert(L, U)
