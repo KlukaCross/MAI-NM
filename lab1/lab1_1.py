@@ -1,37 +1,40 @@
 import numpy as np
 
 
-def LU_decompose(A: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
+def LU_decompose(A: np.ndarray) -> tuple[np.ndarray, np.ndarray, float, list[tuple[int, int]]]:
     n = len(A)
-    swaps_count = 0
+    swaps = []
     L = np.eye(n, dtype=float)
-    U = np.zeros((n, n), dtype=float)
-    Ak = A.copy()
-    for k in range(n-1):
-        if Ak[k, k] == 0:
-            for j in range(k+1, n):
-                if Ak[j, k] != 0:
-                    tmp = Ak[j, :].copy()
-                    Ak[j, :] = Ak[k, :]
-                    Ak[k, :] = tmp
-                    swaps_count += 1
-                    break
+    U = A.copy()
+    for k in range(n):
+        max_row_index = k
+        for i in range(k+1, n):
+            if abs(U[i, k]) > abs(U[max_row_index, k]):
+                max_row_index = i
+        if k != max_row_index:
+            U[max_row_index, :], U[k, :] = U[k, :], U[max_row_index, :].copy()
+            L[max_row_index, :], L[k, :] = L[k, :], L[max_row_index, :].copy()
+            L[:, max_row_index], L[:, k] = L[:, k], L[:, max_row_index].copy()
+            swaps.append((k, max_row_index))
 
-        U[k, :] = Ak[k, :]
-        L[:, k] = Ak[:, k] / U[k, k]
-        Ak -= np.outer(L[:, k], U[k, :])
+        for i in range(k+1, n):
+            mu = U[i, k] / U[k, k]
+            L[i, k] = mu
+            U[i, :] -= mu * U[k, :]
 
-    U[n-1, n-1] = Ak[n-1, n-1]
-    det = (-1)**swaps_count
+    det = (-1)**len(swaps)
     for i in range(n):
         det *= U[i, i]
-    return L, U, det
+    return L, U, det, swaps
 
 
-def solve(L: np.ndarray, U: np.ndarray, b: np.ndarray) -> np.ndarray:
+def solve(L: np.ndarray, U: np.ndarray, b: np.ndarray, swaps: list[tuple[int, int]]) -> np.ndarray:
     n = len(b)
     z = np.ndarray(n, dtype=float)
     x = np.ndarray(n, dtype=float)
+
+    for s1, s2 in swaps:
+        b[s1], b[s2] = b[s2], b[s1]
 
     for i in range(n):
         s = b[i]
@@ -49,13 +52,13 @@ def solve(L: np.ndarray, U: np.ndarray, b: np.ndarray) -> np.ndarray:
     return x
 
 
-def invert(L: np.ndarray, U: np.ndarray) -> np.ndarray:
+def invert(L: np.ndarray, U: np.ndarray, swaps: list[tuple[int, int]]) -> np.ndarray:
     n = len(L)
     res = np.ndarray((n, n), dtype=float)
     for i in range(n):
         b = np.zeros(n)
         b[i] = 1.
-        x = solve(L, U, b)
+        x = solve(L, U, b, swaps)
         for j in range(n):
             res[j, i] = x[j]
     return res
@@ -65,9 +68,12 @@ def main():
     n = int(input())
     A = np.array([list(map(int, input().split())) for _ in range(n)], dtype=float)
     b = np.array(list(map(int, input().split())))
-    L, U, det = LU_decompose(A)
-    x = solve(L, U, b)
-    invert_matrix = invert(L, U)
+    L, U, det, swaps = LU_decompose(A)
+    x = solve(L, U, b, swaps)
+    invert_matrix = invert(L, U, swaps)
+    print(f"L:\n{L}")
+    print(f"U:\n{U}")
+    print(f"L*U:\n{np.dot(L, U)}")
     print(f"x: {x}")
     print(f"det: {det}")
     print(f"invert_matrix:\n{invert_matrix}")
