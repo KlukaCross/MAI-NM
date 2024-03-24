@@ -2,10 +2,12 @@ import numpy as np
 import math
 
 
-def sign(a: float) -> int:
-    if a == 0:
-        return 0
-    return 1 if a > 0 else -1
+def sign(a: float, eps: float) -> int:
+    if a > eps:
+        return 1
+    elif a < eps:
+        return -1
+    return 0
 
 
 def vec_norm(v: np.ndarray) -> float:
@@ -25,14 +27,14 @@ def complex_solve(a11: float, a12: float, a21: float, a22: float, eps: float) ->
     return x1, x2
 
 
-def check_eps_up_diagonal(m: np.ndarray, eps: float) -> bool:
+def check_eps_for_float(m: np.ndarray, eps: float) -> bool:
     for j in range(len(m)):
-        if math.sqrt(sum(map(lambda x: x**2, m[j+1:, j]))) > eps:
+        if math.sqrt(sum(map(lambda x: x**2, m[j+2:, j]))) > eps:
             return True
     return False
 
 
-def check_eps_eigen(v_cur: np.ndarray, v_prev: np.ndarray, eps: float) -> bool:
+def check_eps_for_complex(v_cur: np.ndarray, v_prev: np.ndarray, eps: float) -> bool:
     for i in range(len(v_cur)):
         if abs(v_cur[i] - v_prev[i]) > eps:
             return True
@@ -57,22 +59,22 @@ def calc_eigen(a: np.ndarray, eps: float) -> np.ndarray:
     return v
 
 
-def householder(b: np.ndarray, i: int) -> np.ndarray:
+def householder(b: np.ndarray, i: int, eps: float) -> np.ndarray:
     n = len(b)
     v = b.copy()
-    v[i] += sign(b[i]) * vec_norm(b)
+    v[i] += sign(b[i], eps) * vec_norm(b)
     h = np.eye(n) - (2 / np.dot(v.transpose(), v)) * np.outer(v, v.transpose())
     return h
 
 
-def qr_decompose(a: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def qr_decompose(a: np.ndarray, eps: float) -> tuple[np.ndarray, np.ndarray]:
     n = len(a)
     q = np.eye(n)
     r = a.copy()
     for i in range(n-1):
         b = np.zeros(n)
         b[i:] = r[i:, i]
-        h = householder(b, i)
+        h = householder(b, i, eps)
         q = np.dot(q, h)
         r = np.dot(h, r)
     return q, r
@@ -83,9 +85,9 @@ def qr_algorithm(a: np.ndarray, eps: float) -> tuple[np.ndarray, int]:
     iter_count = 0
     a_k = a.copy()
     v_prev, v_cur = np.zeros((n, n)), calc_eigen(a_k, eps)
-    while check_eps_up_diagonal(a_k, eps) or check_eps_eigen(v_cur, v_prev, eps):
+    while check_eps_for_float(a_k, eps) or check_eps_for_complex(v_cur, v_prev, eps):
         iter_count += 1
-        q, r = qr_decompose(a_k)
+        q, r = qr_decompose(a_k, eps)
         a_k = np.dot(r, q)
         v_prev, v_cur = v_cur, calc_eigen(a_k, eps)
     return v_cur, iter_count
