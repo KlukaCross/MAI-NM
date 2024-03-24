@@ -26,6 +26,13 @@ def main():
     d = np.array(list(map(int, input().split())), dtype=float)
     x = tridiagonal_solve(a, b, c, d)
     print(f"x: {x}")
+    print("Проверка:")
+    n = len(d)
+    for i in range(n):
+        x1 = x[i-1] if i > 0 else 0
+        x2 = x[i]
+        x3 = x[i+1] if i < n - 1 else 0
+        print(f"{a[i]*x1 + b[i]*x2 + c[i]*x3} = {d[i]}")
 
 
 main()
