@@ -6,9 +6,8 @@ def mat_norm(a: np.ndarray) -> float:
     res = 0
     n = len(a)
     for i in range(n):
-        for j in range(n):
-            if i != j:
-                res += a[i, j]**2
+        for j in range(i+1, n):
+            res += a[i, j]**2
     return math.sqrt(res)
 
 
