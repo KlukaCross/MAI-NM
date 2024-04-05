@@ -1,17 +1,49 @@
 import math
 
 
-def simple_iterations(f, phi, phi_d, eps, start_a, start_b):
-    q = max(abs(phi_d(start_a)), abs(phi_d(start_b)))
+def simple_iterations(phi, phi_d, eps, x0):
+    iter_count = 0
+    q = phi_d(x0)
     coef = q / (1 - q)
-    x_k = 1
-    x_k_next = 2
-    while eps < coef * abs(x_k * x_k_next):
-        pass
+    x_k = x0
+    dx = 10e9
+    while eps < coef * dx:
+        x_k_next = phi(x_k)
+        dx = abs(x_k_next - x_k)
+        x_k = x_k_next
+        iter_count += 1
+    return x_k, iter_count
+
+
+def newton_method(f, f_d, f_d2, eps, x0):
+    if f(x0) * f_d2(x0) <= 0:
+        raise ValueError("f(x0) * f_d2(x0) must be > 0")
+
+    iter_count = 0
+    x_k = x0
+    dx = 10e9
+    while eps < dx:
+        x_k_next = x_k - f(x_k)/f_d(x_k)
+        dx = abs(x_k_next - x_k)
+        x_k = x_k_next
+        iter_count += 1
+    return x_k, iter_count
 
 
 def main():
-    eps = int(input())
-    f = lambda x: math.sin(x) - 2*x**2 + 0.5
+    eps = float(input())
+    f = lambda x: math.sin(x) - 2 * x ** 2 + 0.5
+    f_d = lambda x: math.cos(x) - 4*x
+    f_d2 = lambda x: -math.sin(x) - 4
     phi = lambda x: math.sqrt((math.sin(x) + 0.5) / 2)
-    start_a, start_b = 1, 2
+    phi_d = lambda x: math.cos(x) / (2 * math.sqrt(2 * math.sin(x) + 1))
+    start_a, start_b = -0.4, 1
+
+    x, iter_count = simple_iterations(phi, phi_d, eps, start_a)
+    print(f"simple iterations: x={x} iter_count={iter_count}")
+
+    x, iter_count = newton_method(f, f_d, f_d2, eps, start_b)
+    print(f"newton method: x={x} iter_count={iter_count}")
+
+
+main()
