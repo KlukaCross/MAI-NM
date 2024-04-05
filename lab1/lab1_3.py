@@ -63,7 +63,7 @@ def zeidel_solve(a: np.ndarray, b: np.ndarray, eps: float) -> tuple[np.ndarray, 
         for j in range(i, n):
             c[i][j] = alpha[i][j]
 
-    matrix_coef = mat_norm(c)/(1-mat_norm(c))
+    matrix_coef = mat_norm(a)/(1-mat_norm(c))
     x = beta.copy()
     iter_count = 0
     while eps < eps_k:
