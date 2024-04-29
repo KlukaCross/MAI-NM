@@ -52,4 +52,5 @@ def main():
     print(f"newton method: x={x} iter_count={iter_count}")
 
 
-main()
+if __name__ == "__main__":
+    main()

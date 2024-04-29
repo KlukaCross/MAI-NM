@@ -35,4 +35,5 @@ def main():
         print(f"{a[i]*x1 + b[i]*x2 + c[i]*x3} = {d[i]}")
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -79,4 +79,5 @@ def main():
     print(f"invert_matrix:\n{invert_matrix}")
 
 
-main()
+if __name__ == "__main__":
+    main()

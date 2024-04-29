@@ -106,4 +106,5 @@ def main():
     print(f"Количество итераций: {iter_count}")
 
 
-main()
+if __name__ == "__main__":
+    main()

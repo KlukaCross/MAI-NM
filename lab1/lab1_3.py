@@ -91,4 +91,5 @@ def main():
     print(f"\titer count: {zeidel_count}")
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -73,4 +73,5 @@ def main():
         print(f"{np.dot(a, u[:, i])} = {a_k[i, i] * u[:, i]}")
 
 
-main()
+if __name__ == "__main__":
+    main()
