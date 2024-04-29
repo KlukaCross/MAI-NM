@@ -1,11 +1,13 @@
 import math
 
 
-def simple_iterations(phi, phi_d, eps, x0):
+def simple_iterations(phi, phi_d, eps, start_a, start_b):
+    q = abs(phi_d(start_a))
+    if q > 1 or abs(phi_d(start_b)) > q:
+        q = abs(phi_d(start_b))
     iter_count = 0
-    q = phi_d(x0)
     coef = q / (1 - q)
-    x_k = x0
+    x_k = start_b
     dx = 10e9
     while eps < coef * dx:
         x_k_next = phi(x_k)
@@ -37,12 +39,16 @@ def main():
     f_d2 = lambda x: -math.sin(x) - 4
     phi = lambda x: math.sqrt((math.sin(x) + 0.5) / 2)
     phi_d = lambda x: math.cos(x) / (2 * math.sqrt(2 * math.sin(x) + 1))
-    start_a, start_b = -0.4, 1
+    start_a, start_b = 0, 1
 
-    x, iter_count = simple_iterations(phi, phi_d, eps, start_a)
+    x, iter_count = simple_iterations(phi, phi_d, eps, start_a, start_b)
     print(f"simple iterations: x={x} iter_count={iter_count}")
 
-    x, iter_count = newton_method(f, f_d, f_d2, eps, start_b)
+    try:
+        x, iter_count = newton_method(f, f_d, f_d2, eps, start_a)
+    except ValueError:
+        x, iter_count = newton_method(f, f_d, f_d2, eps, start_b)
+
     print(f"newton method: x={x} iter_count={iter_count}")
 
 

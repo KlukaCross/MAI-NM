@@ -41,7 +41,7 @@ def newton_method(
     dx = 1
     x_k = x0
     while eps < dx:
-        x_k_next = x_k - np.dot(j(x_k).transpose(), f(x_k))
+        x_k_next = x_k - np.dot(np.linalg.inv(j(x_k)), f(x_k))  # todo: должно вычисляться из f(x_k) + J(x_k)*dx_x = 0
         dx = vec_norm(x_k_next - x_k)
         x_k = x_k_next
         iter_count += 1
@@ -54,6 +54,7 @@ def simple_iterations(
     x0: np.ndarray,
     eps: float
 ) -> tuple[np.ndarray, int]:
+    # todo: q должна быть максимальная
     iter_count = 0
     q = mat_norm(phi_dx(x0))
     coef = q / (1 - q)
