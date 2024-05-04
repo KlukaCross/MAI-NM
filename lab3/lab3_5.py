@@ -2,7 +2,7 @@ def rect_method(f, a, b, h):
     x_prev = a
     x_cur = a + h
     res = 0
-    while x_prev < b:
+    for _ in range(1, int((b-a)//h)+1):
         res += f((x_prev + x_cur) / 2)
         x_prev = x_cur
         x_cur += h
@@ -13,7 +13,7 @@ def trapezoid_method(f, a, b, h):
     x_prev = a
     x_cur = a + h
     res = 0
-    while x_prev < b:
+    for _ in range(1, int((b-a)//h)+1):
         res += f(x_prev) + f(x_cur)
         x_prev = x_cur
         x_cur += h
@@ -21,15 +21,13 @@ def trapezoid_method(f, a, b, h):
 
 
 def simpson_method(f, a, b, h):
-    x_prev = a
-    x_cur = a + h
-    res = f(a)
-    while x_prev < b:
-        res += 4*f(x_prev+h/2) + 2*f(x_cur)
-        x_prev = x_cur
-        x_cur += h
-    res -= f(b)
-    return res * h / 3
+    h2 = h/2
+    x_cur = a + h2
+    res = f(a) + f(b)
+    for i in range(1, int((b-a)/h2)):
+        res += 2*f(x_cur) if i % 2 == 0 else 4*f(x_cur)
+        x_cur += h2
+    return res * h2 / 3
 
 
 def runge_romberg(Fh, Fkh, k, p):
