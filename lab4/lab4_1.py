@@ -1,62 +1,120 @@
 import math
+import matplotlib.pyplot as plt
 
 
 def euler_method(f, g, l, r, h, y0, z0):
-    n = int((l+r)/h)
-    x_k = l
-    y_k = y0
-    z_k = z0
-    x = [x_k]
-    y = [y_k]
-    z = [z_k]
-    for i in range(1, n+1):
-        x_k += h
-        y_k += h * f(x[i-1], y[i-1], z[i-1])
-        z_k += h + g(x[i-1], y[i-1], z[i-1])
-        x.append(x_k)
-        y.append(y_k)
-        z.append(z_k)
+    n = int((r - l) / h) + 1
+    x = [0] * n
+    y = [0] * n
+    z = [0] * n
+    x[0] = l
+    y[0] = y0
+    z[0] = z0
+    for i in range(n-1):
+        x[i + 1] = x[i] + h
+        y[i + 1] = y[i] + h * f(x[i], y[i], z[i])
+        z[i + 1] = z[i] + h * g(x[i], y[i], z[i])
 
     return x, y, z
 
 
 def runge_kutta_method(f, g, l, r, h, y0, z0):
-    n = int((l+r)/h)
-    x_k = l
-    y_k = y0
-    z_k = z0
-    x = [x_k]
-    y = [y_k]
-    z = [z_k]
-    for i in range(1, n+1):
-        K1 = h * f(x_k, y_k, z_k)
-        L1 = h * g(x_k, y_k, z_k)
-        K2 = h * f(x_k + h/2, y_k + K1/2, z_k + L1/2)
-        L2 = h * g(x_k + h/2, y_k + K1/2, z_k + L1/2)
-        K3 = h * f(x_k + h/2, y_k + K2/2, z_k + L2/2)
-        L3 = h * g(x_k + h/2, y_k + K2/2, z_k + L2/2)
-        K4 = h * f(x_k + h, y_k + K3, z_k + K3)
-        L4 = h * g(x_k + h, y_k + K3, z_k + K3)
-        dy = (K1 + 2*K2 + 2*K3 + K4)/6
-        dz = (L1 + 2*L2 + 2*L3 + L4)/6
-        x_k += h
-        y_k += dy
-        z_k += dz
-        x.append(x_k)
-        y.append(y_k)
-        z.append(z_k)
+    n = int((r - l) / h) + 1
+    x = [0] * n
+    y = [0] * n
+    z = [0] * n
+    x[0] = l
+    y[0] = y0
+    z[0] = z0
+    for i in range(n-1):
+        K1 = h * f(x[i], y[i], z[i])
+        L1 = h * g(x[i], y[i], z[i])
+        K2 = h * f(x[i] + h / 2, y[i] + K1 / 2, z[i] + L1 / 2)
+        L2 = h * g(x[i] + h / 2, y[i] + K1 / 2, z[i] + L1 / 2)
+        K3 = h * f(x[i] + h / 2, y[i] + K2 / 2, z[i] + L2 / 2)
+        L3 = h * g(x[i] + h / 2, y[i] + K2 / 2, z[i] + L2 / 2)
+        K4 = h * f(x[i] + h, y[i] + K3, z[i] + K3)
+        L4 = h * g(x[i] + h, y[i] + K3, z[i] + K3)
+        dy = (K1 + 2 * K2 + 2 * K3 + K4) / 6
+        dz = (L1 + 2 * L2 + 2 * L3 + L4) / 6
+        x[i + 1] = x[i] + h
+        y[i + 1] = y[i] + dy
+        z[i + 1] = z[i] + dz
     return x, y, z
+
+
+def adams_method(f, g, l, r, h, y0, z0):
+    n = int((r - l) / h) + 1
+    x_start, y_start, z_start = runge_kutta_method(f, g, l, l + 4 * h, h, y0, z0)
+    x = [0] * n
+    y = [0] * n
+    z = [0] * n
+    x[:4] = x_start
+    y[:4] = y_start
+    z[:4] = z_start
+    for i in range(3, n-1):
+        x[i + 1] = x[i] + h
+
+        y[i + 1] = y[i] + h / 24 * (55 * f(x[i], y[i], z[i]) -
+                                    59 * f(x[i - 1], y[i - 1], z[i - 1]) +
+                                    37 * f(x[i - 2], y[i - 2], z[i - 2]) -
+                                    9 * f(x[i - 3], y[i - 3], z[i - 3]))
+        z[i + 1] = z[i] + h / 24 * (55 * g(x[i], y[i], z[i]) -
+                                    59 * g(x[i - 1], y[i - 1], z[i - 1]) +
+                                    37 * g(x[i - 2], y[i - 2], z[i - 2]) -
+                                    9 * g(x[i - 3], y[i - 3], z[i - 3]))
+
+    return x, y, z
+
+
+def runge_romberg(y1, y2, k, p):
+    res = 0
+    c = 1 / (k ** p + 1)
+    for i in range(len(y1)):
+        res = max(res, c * abs(y1[i] - y2[i*k]))
+    return res
+
+
+def draw_plots(real_x, real_y, euler_x, euler_y, runge_kutta_x, runge_kutta_y, adams_x, adams_y):
+    plt.plot(real_x, real_y, label="real")
+    plt.plot(euler_x, euler_y, label="euler")
+    plt.plot(runge_kutta_x, runge_kutta_y, label="runge")
+    plt.plot(adams_x, adams_y, label="adams")
+    plt.legend()
+    plt.show()
 
 
 def main():
     f = lambda x, y, z: z
-    g = lambda x, y, z: -z*math.tan(x) - y*math.cos(x)**2
-    y0 = 0
-    z0 = 0
-    l, r = 0, 1
+    g = lambda x, y, z: (x*(2*x+1)*z - (2*x+1)*y) / (x**2 * (x+1))
+    real_f = lambda x: x**2 + x + x*math.log(x)
+    y0 = 2
+    z0 = 4
+    l, r = int(input()), int(input())
     h = 0.1
 
-    euler_values = euler_method(f, g, l, r, h, y0, z0)
+    real_x = [l+i*h for i in range(int((r-l)/h)+1)]
+    real_y = list(map(real_f, real_x))
+
+    euler_x1, euler_y1, _ = euler_method(f, g, l, r, h, y0, z0)
+    runge_kutta_x1, runge_kutta_y1, _ = runge_kutta_method(f, g, l, r, h, y0, z0)
+    adams_x1, adams_y1, _ = adams_method(f, g, l, r, h, y0, z0)
+
+    euler_x2, euler_y2, _ = euler_method(f, g, l, r, h/2, y0, z0)
+    runge_kutta_x2, runge_kutta_y2, _ = runge_kutta_method(f, g, l, r, h/2, y0, z0)
+    adams_x2, adams_y2, _ = adams_method(f, g, l, r, h/2, y0, z0)
+
+    euler_er = runge_romberg(euler_y1, euler_y2, 2, 4)
+    runge_kutta_er = runge_romberg(runge_kutta_y1, runge_kutta_y2, 2, 4)
+    adams_er = runge_romberg(adams_y1, adams_y2, 2, 4)
+
+    draw_plots(real_x, real_y, euler_x1, euler_y1, runge_kutta_x1, runge_kutta_y1, adams_x1, adams_y1)
+
+    print(f"""
+Погрешность метода Эйлера: {euler_er}
+Погрешность метода Рунге-Кутты: {runge_kutta_er}
+Погрешность метода Адамса: {adams_er}
+""")
 
 
 if __name__ == "__main__":
