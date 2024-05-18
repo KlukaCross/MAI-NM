@@ -75,6 +75,13 @@ def runge_romberg(y1, y2, k, p):
     return res
 
 
+def max_abs_error(y1, y2):
+    res = 0
+    for i in range(len(y1)):
+        res = max(res, abs(y1[i] - y2[i]))
+    return res
+
+
 def draw_plots(real_x, real_y, euler_x, euler_y, runge_kutta_x, runge_kutta_y, adams_x, adams_y):
     plt.plot(real_x, real_y, label="real")
     plt.plot(euler_x, euler_y, label="euler")
@@ -104,17 +111,26 @@ def main():
     runge_kutta_x2, runge_kutta_y2, _ = runge_kutta_method(f, g, l, r, h/2, y0, z0)
     adams_x2, adams_y2, _ = adams_method(f, g, l, r, h/2, y0, z0)
 
-    euler_er = runge_romberg(euler_y1, euler_y2, 2, 4)
-    runge_kutta_er = runge_romberg(runge_kutta_y1, runge_kutta_y2, 2, 4)
-    adams_er = runge_romberg(adams_y1, adams_y2, 2, 4)
+    euler_er_rr = runge_romberg(euler_y1, euler_y2, 2, 1)
+    runge_kutta_er_rr = runge_romberg(runge_kutta_y1, runge_kutta_y2, 2, 4)
+    adams_er_rr = runge_romberg(adams_y1, adams_y2, 2, 4)
 
-    draw_plots(real_x, real_y, euler_x1, euler_y1, runge_kutta_x1, runge_kutta_y1, adams_x1, adams_y1)
+    euler_er_ma = max_abs_error(euler_y1, real_y)
+    runge_kutta_er_ma = max_abs_error(runge_kutta_y1, real_y)
+    adams_er_ma = max_abs_error(adams_y1, real_y)
 
     print(f"""
-Погрешность метода Эйлера: {euler_er}
-Погрешность метода Рунге-Кутты: {runge_kutta_er}
-Погрешность метода Адамса: {adams_er}
+Погрешность по Рунге-Ромбергу:
+    Метода Эйлера: {euler_er_rr}
+    Метода Рунге-Кутты: {runge_kutta_er_rr}
+    Метода Адамса: {adams_er_rr}
+Погрешность путём сравнения с точным решением:
+    Метода Эйлера: {euler_er_ma}
+    Метода Рунге-Кутты: {runge_kutta_er_ma}
+    Метода Адамса: {adams_er_ma}
 """)
+
+    draw_plots(real_x, real_y, euler_x1, euler_y1, runge_kutta_x1, runge_kutta_y1, adams_x1, adams_y1)
 
 
 if __name__ == "__main__":
