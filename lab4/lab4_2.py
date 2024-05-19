@@ -24,16 +24,27 @@ def shooting_method(f, g, a, b, h, alpha, beta, delta, gamma, y0, y1, eta0, eta1
         eta0, eta1 = eta1, eta2
 
 
-def finite_difference_method(f, p, q, l, r, h, alpha, beta, delta, gamma, y0, y1):
+def finite_difference_method(f, p, q, l, r, h, alpha, beta, delta, gamma, y0_, y1_):
     n = int((r - l) / h)
     xk = [l + h * i for i in range(n+1)]
     a, b, c, d = [0]*(n+1), [0]*(n+1), [0]*(n+1), [0]*(n+1)
+    """
+    Подстановка:
+     y'0 = (y1 - y0) / h
+     y'N = (yN - y(N-1))) / h
+    в
+     alpha * y0 + beta * y'0 = y0_
+     delta * yN + gamma * y'N = y1_
+    упрощение уравнения и выбор коэффициентов:
+     b[0]*y0 + c[0]*y1 = d[0]
+     a[-1]*y(N-1) + b[-1]yN = d[-1]
+    """
     b[0] = h * alpha - beta
     c[0] = beta
-    d[0] = h * y0
+    d[0] = h * y0_
     a[-1] = -gamma
     b[-1] = h * delta + gamma
-    d[-1] = h * y1
+    d[-1] = h * y1_
     for i in range(1, n):
         a[i] = 1 - p(xk[i]) * h / 2
         b[i] = -2 + h**2 * q(xk[i])
