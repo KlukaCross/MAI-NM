@@ -1,7 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 
-from lab4.lab4_1 import adams_method, runge_romberg, max_abs_error
+from lab4.lab4_1 import runge_kutta_method, runge_romberg, max_abs_error
 from lab1.lab1_2 import tridiagonal_solve
 
 
@@ -10,8 +10,8 @@ def shooting_method(f, g, a, b, h, alpha, beta, delta, gamma, y0, y1, eta0, eta1
         return (y0 - alpha * eta) / beta
 
     while True:
-        _, y_s0, z_s0 = adams_method(f, g, a, b, h, eta0, get_z0(eta0))
-        x_s1, y_s1, z_s1 = adams_method(f, g, a, b, h, eta1, get_z0(eta1))
+        _, y_s0, z_s0 = runge_kutta_method(f, g, a, b, h, eta0, get_z0(eta0))
+        x_s1, y_s1, z_s1 = runge_kutta_method(f, g, a, b, h, eta1, get_z0(eta1))
 
         phi0 = delta * y_s0[-1] + gamma * z_s0[-1] - y1
         phi1 = delta * y_s1[-1] + gamma * z_s1[-1] - y1

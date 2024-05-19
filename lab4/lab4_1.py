@@ -33,8 +33,8 @@ def runge_kutta_method(f, g, l, r, h, y0, z0):
         L2 = h * g(x[i] + h / 2, y[i] + K1 / 2, z[i] + L1 / 2)
         K3 = h * f(x[i] + h / 2, y[i] + K2 / 2, z[i] + L2 / 2)
         L3 = h * g(x[i] + h / 2, y[i] + K2 / 2, z[i] + L2 / 2)
-        K4 = h * f(x[i] + h, y[i] + K3, z[i] + K3)
-        L4 = h * g(x[i] + h, y[i] + K3, z[i] + K3)
+        K4 = h * f(x[i] + h, y[i] + K3, z[i] + L3)
+        L4 = h * g(x[i] + h, y[i] + K3, z[i] + L3)
         dy = (K1 + 2 * K2 + 2 * K3 + K4) / 6
         dz = (L1 + 2 * L2 + 2 * L3 + L4) / 6
         x[i + 1] = x[i] + h
