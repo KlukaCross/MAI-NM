@@ -11,15 +11,16 @@ def shooting_method(f, g, a, b, h, alpha, beta, delta, gamma, y0, y1, eta0, eta1
 
     while True:
         _, y_s0, z_s0 = runge_kutta_method(f, g, a, b, h, eta0, get_z0(eta0))
-        x_s1, y_s1, z_s1 = runge_kutta_method(f, g, a, b, h, eta1, get_z0(eta1))
+        _, y_s1, z_s1 = runge_kutta_method(f, g, a, b, h, eta1, get_z0(eta1))
 
         phi0 = delta * y_s0[-1] + gamma * z_s0[-1] - y1
         phi1 = delta * y_s1[-1] + gamma * z_s1[-1] - y1
 
         eta2 = eta1 - (eta1 - eta0) / (phi1 - phi0) * phi1
-
-        if abs(eta2 - eta1) < eps:
-            return x_s1, y_s1, z_s1
+        x_s2, y_s2, z_s2 = runge_kutta_method(f, g, a, b, h, eta2, get_z0(eta2))
+        phi2 = delta * y_s2[-1] + gamma * z_s2[-1] - y1
+        if phi2 < eps:
+            return x_s2, y_s2, z_s2
 
         eta0, eta1 = eta1, eta2
 

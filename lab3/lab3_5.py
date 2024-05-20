@@ -48,7 +48,7 @@ def main():
 
     rect_er = runge_romberg(rect1, rect2, h2 / h1, 2)
     trap_er = runge_romberg(trap1, trap2, h2 / h1, 2)
-    simp_er = runge_romberg(simp1, simp2, h2 / h1, 2)
+    simp_er = runge_romberg(simp1, simp2, h2 / h1, 4)
 
     print(f"""
 Значение метода прямоугольника с шагом {h1}: {rect1}
