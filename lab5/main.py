@@ -15,6 +15,9 @@ class SolutionSchema(StrEnum):
     exact = "exact"
 
 
+AvailableSolutionSchemas = [SolutionSchema.explicit, SolutionSchema.implicit, SolutionSchema.combined]
+
+
 class ApproximatingBoundaryConditionsType(StrEnum):
     t_2t1p = "2t1p"
     t_3t2p = "3t2p"
@@ -24,7 +27,6 @@ class ApproximatingBoundaryConditionsType(StrEnum):
 class ParabolicPartialDifferentialEquationSolver:
     def __init__(
         self,
-        a: float,
         T: int,
         l: int,
         N: int,
@@ -36,7 +38,6 @@ class ParabolicPartialDifferentialEquationSolver:
         tau,
         h
     ):
-        self.a = a
         self.T = T
         self.l = l
         self.N = N
@@ -51,7 +52,7 @@ class ParabolicPartialDifferentialEquationSolver:
 
         self.h = h
         self.tau = tau
-        self.sigma = self.a * self.tau / self.h**2
+        self.sigma = self.tau / self.h**2
         self.check_stability()
 
         if self.schema == SolutionSchema.implicit:
@@ -65,16 +66,19 @@ class ParabolicPartialDifferentialEquationSolver:
         self.t = t
 
     def phi_0(self, t):  # u_x(0, t)
-        return np.exp(-self.a*t)
+        return np.exp(-0.5*t)
 
     def phi_l(self, t):  # u_x(pi, t)
-        return -np.exp(-self.a*t)
+        return -np.exp(-0.5*t)
 
     def psi(self, x):  # u(x, 0)
         return np.sin(x)
 
+    def g(self, x, t):
+        return 0.5 * np.exp(-0.5 * t) * np.sin(x)
+
     def exact_solution(self, x, t):
-        return np.exp(-self.a*t)*np.sin(x)
+        return np.exp(-0.5*t)*np.sin(x)
 
     def clear_trd(self):
         self.trd_a = np.zeros(self.N)
@@ -92,13 +96,17 @@ class ParabolicPartialDifferentialEquationSolver:
         self.trd_a[0] = 0
         self.trd_b[0] = -2*self.sigma*self.theta
         self.trd_c[0] = 2*self.sigma*self.theta - 1
-        self.trd_d[0] = 2*self.sigma*self.theta*self.h*self.phi_0(self.t[k]) - (uk[1] + (1 - self.theta)*self.sigma*(uk[0] - 2*uk[1] + uk[2]))
+        self.trd_d[0] = (2*self.sigma*self.theta*self.h*self.phi_0(self.t[k]) -
+                         (uk[1] + self.theta * self.tau * self.g(self.x[1], self.t[k])) -
+                         ((1 - self.theta)*self.sigma*(uk[0] - 2*uk[1] + uk[2] + self.h**2 * self.g(self.x[1], self.t[k-1]))))
 
     def fill_trd_0_2t2p(self, k, uk):
         self.trd_a[0] = 0
         self.trd_b[0] = -(2*self.sigma*self.theta + 1)
         self.trd_c[0] = 2*self.sigma*self.theta
-        self.trd_d[0] = 2*self.sigma*self.theta*self.h*self.phi_0(self.t[k]) - uk[0] - (2*(1 - self.theta)*self.sigma*(uk[1] - uk[0] - self.h*(self.phi_0(self.t[k-1]))))
+        self.trd_d[0] = (2*self.sigma*self.theta*self.h*self.phi_0(self.t[k]) -
+                         (uk[0] + self.theta*self.tau*self.g(self.x[0], self.t[k])) -
+                         (2*(1 - self.theta)*self.sigma*(uk[1] - uk[0] - self.h*(self.phi_0(self.t[k-1])) + 0.5*self.h**2*self.g(self.x[0], self.t[k-1]))))
 
     def fill_trd_0(self, k, uk_prev):
         match self.boundary:
@@ -119,13 +127,17 @@ class ParabolicPartialDifferentialEquationSolver:
         self.trd_a[-1] = 1 - 2*self.sigma*self.theta
         self.trd_b[-1] = 2*self.sigma*self.theta
         self.trd_c[-1] = 0
-        self.trd_d[-1] = 2*self.sigma*self.theta*self.h*self.phi_l(self.t[k]) + (uk[-2] + (1 - self.theta)*self.sigma*(uk[-3] - 2*uk[-2] + uk[-1]))
+        self.trd_d[-1] = (2*self.sigma*self.theta*self.h*self.phi_l(self.t[k]) +
+                          (uk[-2] + self.theta * self.tau * self.g(self.x[-2], self.t[k])) +
+                          ((1 - self.theta)*self.sigma*(uk[-3] - 2*uk[-2] + uk[-1] + self.h**2 * self.g(self.x[-2], self.t[k-1]))))
 
     def fill_trd_l_2t2p(self, k, uk):
         self.trd_a[-1] = 2*self.sigma*self.theta
         self.trd_b[-1] = -(2*self.sigma*self.theta + 1)
         self.trd_c[-1] = 0
-        self.trd_d[-1] = -2*self.sigma*self.theta*self.h*self.phi_l(self.t[k]) - uk[-1] - (2 * (1-self.theta)*self.sigma*(uk[-2] - uk[-1] + self.h*self.phi_l(self.t[k-1])))
+        self.trd_d[-1] = (-2*self.sigma*self.theta*self.h*self.phi_l(self.t[k]) -
+                          (uk[-1] + self.theta*self.tau*self.g(self.x[-1], self.t[k])) -
+                          (2 * (1-self.theta)*self.sigma*(uk[-2] - uk[-1] + self.h*self.phi_l(self.t[k-1]) + 0.5*self.h**2*self.g(self.x[-1], self.t[k-1]))))
 
     def fill_trd_l(self, k, uk_prev):
         match self.boundary:
@@ -143,7 +155,7 @@ class ParabolicPartialDifferentialEquationSolver:
         return (-2*self.h*self.phi_0(self.t[k]) + 4*uk_cur[1] - uk_cur[2]) / 3
 
     def get_explicit_0_2t2p(self, k, uk_prev, uk_cur):
-        return -2*self.sigma*self.h*self.phi_0(self.t[k-1]) + 2*self.sigma*uk_prev[1] + (1 - 2*self.sigma)*uk_prev[0]
+        return -2*self.sigma*self.h*self.phi_0(self.t[k-1]) + 2*self.sigma*uk_prev[1] + (1 - 2*self.sigma)*uk_prev[0] + self.tau * self.g(self.x[0], self.t[k-1])
 
     def get_explicit_0(self, k, uk_prev, uk_cur):
         match self.boundary:
@@ -161,7 +173,7 @@ class ParabolicPartialDifferentialEquationSolver:
         return (2*self.h*self.phi_l(self.t[k]) + 4*uk_cur[-2] - uk_cur[-3]) / 3
 
     def get_explicit_l_2t2p(self, k, uk_prev, uk_cur):
-        return 2*self.sigma*self.h*self.phi_l(self.t[k-1]) + 2*self.sigma*uk_prev[-2] + (1 - 2*self.sigma)*uk_prev[-1]
+        return 2*self.sigma*self.h*self.phi_l(self.t[k-1]) + 2*self.sigma*uk_prev[-2] + (1 - 2*self.sigma)*uk_prev[-1] + self.tau * self.g(self.x[-1], self.t[k-1])
 
     def get_explicit_l(self, k, uk_prev, uk_cur):
         match self.boundary:
@@ -172,31 +184,13 @@ class ParabolicPartialDifferentialEquationSolver:
             case ApproximatingBoundaryConditionsType.t_2t2p:
                 return self.get_explicit_l_2t2p(k, uk_prev, uk_cur)
 
-    def solve_implicit(self):
-        u = np.zeros((self.K, self.N))
-        u[0] = self.psi(self.x)
-
-        for k in range(1, self.K):
-            self.clear_trd()
-            self.trd_a[:] = self.sigma * self.theta
-            self.trd_b[:] = -1 - 2*self.sigma*self.theta
-            self.trd_c[:] = self.sigma * self.theta
-            self.trd_d[1:-1] = -u[k-1][1:-1]
-
-            self.fill_trd_0(k, u[k-1])
-            self.fill_trd_l(k, u[k-1])
-
-            u[k][:] = lab1.tridiagonal_solve(self.trd_a, self.trd_b, self.trd_c, self.trd_d)
-
-        return u
-
     def solve_explicit(self):
         u = np.zeros((self.K, self.N))
         u[0] = self.psi(self.x)
 
         for k in range(1, self.K):
             for j in range(1, self.N - 1):
-                u[k][j] = self.sigma*u[k-1][j-1] + (1 - 2*self.sigma)*u[k-1][j] + self.sigma*u[k-1][j+1]
+                u[k][j] = self.sigma*u[k-1][j-1] + (1 - 2*self.sigma)*u[k-1][j] + self.sigma*u[k-1][j+1] + self.tau * self.g(self.x[j], self.t[k-1])
             u[k][0] = self.get_explicit_0(k, u[k-1], u[k])
             u[k][-1] = self.get_explicit_l(k, u[k-1], u[k])
 
@@ -211,7 +205,10 @@ class ParabolicPartialDifferentialEquationSolver:
             self.trd_a[:] = self.sigma * self.theta
             self.trd_b[:] = -1 - 2*self.sigma*self.theta
             self.trd_c[:] = self.sigma * self.theta
-            self.trd_d[1:-1] = np.array([-(u[k-1][i] + (1-self.theta) * self.sigma * (u[k-1][i-1] - 2*u[k-1][i] + u[k-1][i+1])) for i in range(1, self.N-1)])
+            for j in range(1, self.N - 1):
+                self.trd_d[j] = -(u[k - 1][j] + self.theta * self.tau * self.g(self.x[j], self.t[k]) + (
+                            1 - self.theta) * self.sigma * (u[k - 1][j - 1] - 2 * u[k - 1][j] + u[k - 1][
+                    j + 1] + self.h ** 2 * self.g(self.x[j], self.t[k - 1])))
 
             self.fill_trd_0(k, u[k-1])
             self.fill_trd_l(k, u[k-1])
@@ -233,7 +230,7 @@ class ParabolicPartialDifferentialEquationSolver:
             case SolutionSchema.explicit:
                 return self.solve_explicit()
             case SolutionSchema.implicit:
-                return self.solve_implicit()
+                return self.solve_crank_nicholson()
             case SolutionSchema.combined:
                 return self.solve_crank_nicholson()
             case SolutionSchema.exact:
@@ -248,23 +245,27 @@ def calc_mean_abs_error(numeric, analytic):
 
 
 @click.command()
-@click.option("--a", default=0.5, help="коэффициент a")
-@click.option("--t", default=5., help="параметр сетки T")
+@click.option("--t", default=3., help="параметр сетки T")
 @click.option("--l", default=np.pi, help="параметр сетки l")
-@click.option("--n", default=10, help="параметр сетки N")
-@click.option("--k", default=70, help="параметр сетки K")
+@click.option("--start_n", default=5, help="параметр сетки N -- старт отсчета")
+@click.option("--start_k", default=60, help="параметр сетки K -- старт отсчета")
+@click.option("--end_n", default=10, help="параметр сетки N -- конец отсчета")
+@click.option("--end_k", default=80, help="параметр сетки K -- конец отсчета")
+@click.option("--grid_step", default=5, help="шаг прохода по мелкости разбиения сетки")
 @click.option("--schema", default="all", help="схема решения: explicit - явная; implicit - неявная; combined - Кранка-Николсона; all (по умолчанию) - все схемы")
-@click.option("--boundary", default="all", help="тип аппроксимации граничных условий: 2t1p - двухточечная первого порядка; 3t2p - трёхточечная второго порядка; 2t2p - двухточечная второго порядка; all (по умолчанию) - все виды")
+@click.option("--boundary", default="2t2p", help="тип аппроксимации граничных условий: 2t1p - двухточечная первого порядка; 3t2p - трёхточечная второго порядка; 2t2p - двухточечная второго порядка; all (по умолчанию) - все виды")
 def main(
-    a: float,
     t: int,
     l: int,
-    n: int,
-    k: int,
+    start_n: int,
+    start_k: int,
+    end_n: int,
+    end_k: int,
+    grid_step: int,
     schema: str,
     boundary: str
 ):
-    if schema != "all" and schema not in SolutionSchema:
+    if schema != "all" and schema not in AvailableSolutionSchemas:
         print("bad schema parameter, see usage")
         return
     if boundary != "all" and boundary not in ApproximatingBoundaryConditionsType:
@@ -272,7 +273,7 @@ def main(
         return
 
     if schema == "all":
-        schemas = list(SolutionSchema)
+        schemas = list(AvailableSolutionSchemas)
     else:
         schemas = [SolutionSchema[schema]]
     if boundary == "all":
@@ -280,10 +281,12 @@ def main(
     else:
         boundaries = [ApproximatingBoundaryConditionsType["t_"+boundary]]
 
-    time = k-1
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
-    ax1.set_title("U(x)")
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
 
+    ax1.set_title("U(x)")
+    n = start_n
+    k = start_k
+    fix_time = k-1
     h = l / (n - 1)
     tau = t / (k-1)
     tt = [i * tau for i in range(k - 1)]
@@ -293,10 +296,9 @@ def main(
     x.append(l)
     x = np.array(x)
 
-    results = []
+    results: list[tuple[SolutionSchema, ApproximatingBoundaryConditionsType, ...]] = []
     for sc, bndr in product(schemas, boundaries):
         solver = ParabolicPartialDifferentialEquationSolver(
-            a=a,
             T=t,
             l=l,
             N=n,
@@ -309,29 +311,99 @@ def main(
             h=h
         )
         result = solver.solve()
-        results.append(result)
-        ax1.plot(x, result[time], label=f"{sc}_{bndr}")
+        results.append((sc, bndr, result))
+        ax1.plot(x, result[fix_time], label=f"{sc}_{bndr}")
+
+    bndr_to_exact_results = {}
+    for sc, bndr in product([SolutionSchema.exact], boundaries):
+        solver = ParabolicPartialDifferentialEquationSolver(
+            T=t,
+            l=l,
+            N=n,
+            K=k,
+            schema=sc,
+            boundary=bndr,
+            x=x,
+            t=tt,
+            tau=tau,
+            h=h
+        )
+        result = solver.solve()
+        bndr_to_exact_results[bndr] = result
+        ax1.plot(x, result[fix_time], label=f"{sc}_{bndr}")
 
     ax1.grid()
     ax1.legend(loc='best')
     ax1.set_ylabel("U")
     ax1.set_xlabel("x")
 
-    if schema == "all":
-        ax2.set_title("График ошибки")
-        exact_res = None
-        for res, sc in zip(results, schemas):
-            if sc == SolutionSchema.exact:
-                exact_res = res
-                break
-        for res, sc in zip(results, schemas):
-            if sc == SolutionSchema.exact:
-                continue
-            ax2.plot(tt, calc_mean_abs_error(res, exact_res), label=sc)
-        ax2.set_ylabel("Ошибка")
-        ax2.set_xlabel("t")
-        ax2.grid()
-        ax2.legend(loc='best')
+    ax2.set_title("График ошибки от времени")
+    for sc, bndr, res in results:
+        ax2.plot(tt, calc_mean_abs_error(res, bndr_to_exact_results[bndr]), label=f"{sc}_{bndr}")
+    ax2.set_ylabel("Ошибка")
+    ax2.set_xlabel("t")
+    ax2.grid()
+    ax2.legend(loc='best')
+
+    ax3.set_title("График ошибки от параметров мелкости разбиения сетки")
+    n_step = (end_n - start_n) // grid_step
+    k_step = (end_k - start_k) // grid_step
+    schema = schemas[0]
+    boundary = boundaries[0]
+    nn = [start_n + n_step*i for i in range(grid_step)]
+    nn = np.array(nn)
+    kk = [start_k + k_step*i for i in range(grid_step)]
+    kk = np.array(kk)
+    ers = []
+    h_tau_params = []
+    for step in range(grid_step):
+        n = nn[step]
+        k = kk[step]
+        h = l / (n - 1)
+        tau = t / (k - 1)
+        h_tau_params.append(f"{h:,.3f} | {tau:,.3f}")
+        tt = [i * tau for i in range(k - 1)]
+        tt.append(t)
+        tt = np.array(tt)
+        x = [i * h for i in range(n - 1)]
+        x.append(l)
+        x = np.array(x)
+
+        solver = ParabolicPartialDifferentialEquationSolver(
+            T=t,
+            l=l,
+            N=n,
+            K=k,
+            schema=schema,
+            boundary=boundary,
+            x=x,
+            t=tt,
+            tau=tau,
+            h=h
+        )
+        result = solver.solve()
+
+        solver = ParabolicPartialDifferentialEquationSolver(
+            T=t,
+            l=l,
+            N=n,
+            K=k,
+            schema=SolutionSchema.exact,
+            boundary=boundary,
+            x=x,
+            t=tt,
+            tau=tau,
+            h=h
+        )
+        exact_result = solver.solve()
+
+        ers.append(max(calc_mean_abs_error(result, exact_result)))
+
+    ax3.plot()
+    ax3.plot(h_tau_params, ers)
+    ax3.set_ylabel("Ошибка")
+    ax3.set_xlabel("h | tau")
+    ax3.grid()
 
     plt.tight_layout()
     plt.show()
