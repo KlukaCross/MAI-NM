@@ -53,12 +53,12 @@ class ParabolicPartialDifferentialEquationSolver:
         self.h = h
         self.tau = tau
         self.sigma = self.tau / self.h**2
-        self.check_stability()
 
         if self.schema == SolutionSchema.implicit:
             self.theta = 1
         elif self.schema == SolutionSchema.explicit:
             self.theta = 0
+            self.check_stability()
         else:
             self.theta = 0.5
 
@@ -240,20 +240,20 @@ class ParabolicPartialDifferentialEquationSolver:
         assert self.sigma <= 0.5, self.sigma
 
 
-def calc_mean_abs_error(numeric, analytic):
-    return np.abs(numeric - analytic).mean(axis=1)
+def calc_max_abs_error(numeric, analytic):
+    return np.abs(numeric - analytic).max(axis=1)
 
 
 @click.command()
-@click.option("--t", default=3., help="параметр сетки T")
+@click.option("--t", default=5., help="параметр сетки T")
 @click.option("--l", default=np.pi, help="параметр сетки l")
-@click.option("--start_n", default=5, help="параметр сетки N -- старт отсчета")
+@click.option("--start_n", default=4, help="параметр сетки N -- старт отсчета")
 @click.option("--start_k", default=60, help="параметр сетки K -- старт отсчета")
-@click.option("--end_n", default=10, help="параметр сетки N -- конец отсчета")
+@click.option("--end_n", default=9, help="параметр сетки N -- конец отсчета")
 @click.option("--end_k", default=80, help="параметр сетки K -- конец отсчета")
 @click.option("--grid_step", default=5, help="шаг прохода по мелкости разбиения сетки")
 @click.option("--schema", default="all", help="схема решения: explicit - явная; implicit - неявная; combined - Кранка-Николсона; all (по умолчанию) - все схемы")
-@click.option("--boundary", default="2t2p", help="тип аппроксимации граничных условий: 2t1p - двухточечная первого порядка; 3t2p - трёхточечная второго порядка; 2t2p - двухточечная второго порядка; all (по умолчанию) - все виды")
+@click.option("--boundary", default="all", help="тип аппроксимации граничных условий: 2t1p - двухточечная первого порядка; 3t2p - трёхточечная второго порядка; 2t2p - двухточечная второго порядка; all (по умолчанию) - все виды")
 def main(
     t: int,
     l: int,
@@ -284,8 +284,8 @@ def main(
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
 
     ax1.set_title("U(x)")
-    n = start_n
-    k = start_k
+    n = end_n
+    k = end_k
     fix_time = k-1
     h = l / (n - 1)
     tau = t / (k-1)
@@ -314,23 +314,21 @@ def main(
         results.append((sc, bndr, result))
         ax1.plot(x, result[fix_time], label=f"{sc}_{bndr}")
 
-    bndr_to_exact_results = {}
-    for sc, bndr in product([SolutionSchema.exact], boundaries):
-        solver = ParabolicPartialDifferentialEquationSolver(
-            T=t,
-            l=l,
-            N=n,
-            K=k,
-            schema=sc,
-            boundary=bndr,
-            x=x,
-            t=tt,
-            tau=tau,
-            h=h
-        )
-        result = solver.solve()
-        bndr_to_exact_results[bndr] = result
-        ax1.plot(x, result[fix_time], label=f"{sc}_{bndr}")
+    solver = ParabolicPartialDifferentialEquationSolver(
+        T=t,
+        l=l,
+        N=n,
+        K=k,
+        schema=SolutionSchema.exact,
+        boundary=boundaries[0],
+        x=x,
+        t=tt,
+        tau=tau,
+        h=h
+    )
+    result = solver.solve()
+    exact_result = result
+    ax1.plot(x, result[fix_time], label=str(SolutionSchema.exact))
 
     ax1.grid()
     ax1.legend(loc='best')
@@ -339,7 +337,7 @@ def main(
 
     ax2.set_title("График ошибки от времени")
     for sc, bndr, res in results:
-        ax2.plot(tt, calc_mean_abs_error(res, bndr_to_exact_results[bndr]), label=f"{sc}_{bndr}")
+        ax2.plot(tt, calc_max_abs_error(res, exact_result), label=f"{sc}_{bndr}")
     ax2.set_ylabel("Ошибка")
     ax2.set_xlabel("t")
     ax2.grid()
@@ -348,62 +346,61 @@ def main(
     ax3.set_title("График ошибки от параметров мелкости разбиения сетки")
     n_step = (end_n - start_n) // grid_step
     k_step = (end_k - start_k) // grid_step
-    schema = schemas[0]
-    boundary = boundaries[0]
     nn = [start_n + n_step*i for i in range(grid_step)]
     nn = np.array(nn)
     kk = [start_k + k_step*i for i in range(grid_step)]
     kk = np.array(kk)
-    ers = []
-    h_tau_params = []
-    for step in range(grid_step):
-        n = nn[step]
-        k = kk[step]
-        h = l / (n - 1)
-        tau = t / (k - 1)
-        h_tau_params.append(f"{h:,.3f} | {tau:,.3f}")
-        tt = [i * tau for i in range(k - 1)]
-        tt.append(t)
-        tt = np.array(tt)
-        x = [i * h for i in range(n - 1)]
-        x.append(l)
-        x = np.array(x)
 
-        solver = ParabolicPartialDifferentialEquationSolver(
-            T=t,
-            l=l,
-            N=n,
-            K=k,
-            schema=schema,
-            boundary=boundary,
-            x=x,
-            t=tt,
-            tau=tau,
-            h=h
-        )
-        result = solver.solve()
+    for sc, bndr in product(schemas, boundaries):
+        ers = []
+        h_tau_params = []
+        for step in range(grid_step):
+            n = nn[step]
+            k = kk[step]
+            h = l / (n - 1)
+            tau = t / (k - 1)
+            h_tau_params.append(f"{h:,.3f} | {tau:,.3f}")
+            tt = [i * tau for i in range(k - 1)]
+            tt.append(t)
+            tt = np.array(tt)
+            x = [i * h for i in range(n - 1)]
+            x.append(l)
+            x = np.array(x)
 
-        solver = ParabolicPartialDifferentialEquationSolver(
-            T=t,
-            l=l,
-            N=n,
-            K=k,
-            schema=SolutionSchema.exact,
-            boundary=boundary,
-            x=x,
-            t=tt,
-            tau=tau,
-            h=h
-        )
-        exact_result = solver.solve()
+            solver = ParabolicPartialDifferentialEquationSolver(
+                T=t,
+                l=l,
+                N=n,
+                K=k,
+                schema=sc,
+                boundary=bndr,
+                x=x,
+                t=tt,
+                tau=tau,
+                h=h
+            )
+            result = solver.solve()
 
-        ers.append(max(calc_mean_abs_error(result, exact_result)))
+            solver = ParabolicPartialDifferentialEquationSolver(
+                T=t,
+                l=l,
+                N=n,
+                K=k,
+                schema=SolutionSchema.exact,
+                boundary=bndr,
+                x=x,
+                t=tt,
+                tau=tau,
+                h=h
+            )
+            exact_result = solver.solve()
+            ers.append(max(calc_max_abs_error(result, exact_result)))
 
-    ax3.plot()
-    ax3.plot(h_tau_params, ers)
+        ax3.plot(h_tau_params, ers, label=f"{sc}_{bndr}")
     ax3.set_ylabel("Ошибка")
     ax3.set_xlabel("h | tau")
     ax3.grid()
+    ax3.legend(loc='best')
 
     plt.tight_layout()
     plt.show()
