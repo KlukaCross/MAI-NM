@@ -232,11 +232,11 @@ def calc_max_abs_error(numeric, analytic):
 @click.option("--l", default=1, help="параметр сетки l")
 @click.option("--start_n", default=4, help="параметр сетки N -- старт отсчета")
 @click.option("--start_k", default=50, help="параметр сетки K -- старт отсчета")
-@click.option("--end_n", default=10, help="параметр сетки N -- конец отсчета")
+@click.option("--end_n", default=20, help="параметр сетки N -- конец отсчета")
 @click.option("--end_k", default=100, help="параметр сетки K -- конец отсчета")
 @click.option("--grid_step", default=7, help="шаг прохода по мелкости разбиения сетки")
 @click.option("--schema", default="all", help="схема решения: explicit - явная; implicit - неявная; all (по умолчанию) - все схемы")
-@click.option("--boundary", default="3t2p", help="тип аппроксимации граничных условий: 2t1p - двухточечная первого порядка; 3t2p - трёхточечная второго порядка; 2t2p - двухточечная второго порядка; all (по умолчанию) - все виды")
+@click.option("--boundary", default="all", help="тип аппроксимации граничных условий: 2t1p - двухточечная первого порядка; 3t2p - трёхточечная второго порядка; 2t2p - двухточечная второго порядка; all (по умолчанию) - все виды")
 def main(
     t: int,
     l: int,
