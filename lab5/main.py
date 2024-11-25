@@ -359,7 +359,7 @@ def main(
             k = kk[step]
             h = l / (n - 1)
             tau = t / (k - 1)
-            h_tau_params.append(f"{h:,.3f} | {tau:,.3f}")
+            h_tau_params.append(f"{np.log(h):,.3f} | {np.log(tau):,.3f}")
             tt = [i * tau for i in range(k - 1)]
             tt.append(t)
             tt = np.array(tt)
@@ -396,9 +396,9 @@ def main(
             exact_result = solver.solve()
             ers.append(max(calc_max_abs_error(result, exact_result)))
 
-        ax3.plot(h_tau_params, ers, label=f"{sc}_{bndr}")
+        ax3.plot(h_tau_params, np.log(ers), label=f"{sc}_{bndr}")
     ax3.set_ylabel("Ошибка")
-    ax3.set_xlabel("h | tau")
+    ax3.set_xlabel("log(h) | log(tau)")
     ax3.grid()
     ax3.legend(loc='best')
 
