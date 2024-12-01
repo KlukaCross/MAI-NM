@@ -69,31 +69,32 @@ def sign(x):
 
 
 def finite_difference_schema_general_view(
-    x_range,  # (x_begin, x_end) диапазон значений x
-    y_range,  # (y_begin, y_end) диапазон значений y
-    h_x,  # Длина шага по x
-    h_y,  # Длина шага по y
-    a,  # Коэффициент перед ∂u/∂x
-    b,  # Коэффициент перед ∂u/∂y
-    c,  # Коэффициент перед u
-    f,  # Источниковый член в выражении ∂²u/∂x² + ∂²u/∂y² + a * ∂u/∂x + b * ∂u/∂y = f
-    alpha_1,  # Коэффициент перед ∂/∂x u(0, y)
-    beta_1,  # Коэффициент перед u(0, y)
-    alpha_2,  # Коэффициент перед ∂/∂x u(l₁, y)
-    beta_2,  # Коэффициент перед u(l₁, y)
-    alpha_3,  # Коэффициент перед ∂/∂y u(x, 0)
-    beta_3,  # Коэффициент перед u(x, 0)
-    alpha_4,  # Коэффициент перед ∂/∂y u(x, l₂)
-    beta_4,  # Коэффициент перед u(x, l₂)
-    phi_1,  # Граничное условие для 0 по x
-    phi_2,  # Граничное условие для l₁ по x
-    phi_3,  # Граничное условие для 0 по y
-    phi_4,  # Граничное условие для l₂ по y
-    initial,  # флаг управления линейной интерполяции неизвестных компонент
-    method_name,  # название используемого метода
-    theta, # коэффициент метода верхней релаксации (для получения просто Зейделя нужен коэффициент = 1), в методе простых итераций не используется
-    eps,  # точность решения
-    direction_of_traversing_the_matrix,  # ↘↙↖↗ - всевозможные обходы матрицы
+        x_range,  # (x_begin, x_end) диапазон значений x
+        y_range,  # (y_begin, y_end) диапазон значений y
+        h_x,  # Длина шага по x
+        h_y,  # Длина шага по y
+        a,  # Коэффициент перед ∂u/∂x
+        b,  # Коэффициент перед ∂u/∂y
+        c,  # Коэффициент перед u
+        f,  # Источниковый член в выражении ∂²u/∂x² + ∂²u/∂y² + a * ∂u/∂x + b * ∂u/∂y = f
+        alpha_1,  # Коэффициент перед ∂/∂x u(0, y)
+        beta_1,  # Коэффициент перед u(0, y)
+        alpha_2,  # Коэффициент перед ∂/∂x u(l₁, y)
+        beta_2,  # Коэффициент перед u(l₁, y)
+        alpha_3,  # Коэффициент перед ∂/∂y u(x, 0)
+        beta_3,  # Коэффициент перед u(x, 0)
+        alpha_4,  # Коэффициент перед ∂/∂y u(x, l₂)
+        beta_4,  # Коэффициент перед u(x, l₂)
+        phi_1,  # Граничное условие для 0 по x
+        phi_2,  # Граничное условие для l₁ по x
+        phi_3,  # Граничное условие для 0 по y
+        phi_4,  # Граничное условие для l₂ по y
+        initial,  # флаг управления линейной интерполяции неизвестных компонент
+        method_name,  # название используемого метода
+        theta,
+        # коэффициент метода верхней релаксации (для получения просто Зейделя нужен коэффициент = 1), в методе простых итераций не используется
+        eps,  # точность решения
+        direction_of_traversing_the_matrix,  # ↘↙↖↗ - всевозможные обходы матрицы
 ):
     """
     Решает эллиптическое дифференциальное уравнения, используя конечно-разностную схему и один из численных методов для системы уравнений.
@@ -105,7 +106,8 @@ def finite_difference_schema_general_view(
     n = len(x)
     m = len(y)
 
-    res = np.zeros((n, m))  # Такое объявление означает, что x отвечает за вектор направленный ровно вниз, а y за вектор, направленный вправо
+    res = np.zeros((n,
+                    m))  # Такое объявление означает, что x отвечает за вектор направленный ровно вниз, а y за вектор, направленный вправо
     # Если перефразировать: x - первый индекс, y - второй индекс двумерной матрицы
 
     # Шаг 1. Инициализация сетки с граничными условиями:
@@ -270,17 +272,20 @@ def L2_norm_diff(A, B):
 
 
 def plot_combined_results_and_errors(
-    solutions,  # словарь решений: solutions[имя_метода] = численное решение
-    analytical_solution_name,  # имя аналитического решения для сравнения
-    x_range,  # диапазон значений x
-    y_range,  # диапазон значений y
-    h_x,  # длина шага по x
-    h_y  # длина шага по y
+        solutions,  # словарь решений: solutions[имя_метода] = численное решение
+        analytical_solution_name,  # имя аналитического решения для сравнения
+        solutions_for_difference_h_x,  # решения с шагом по параметру h_x
+        solutions_for_difference_h_y,  # решения с шагом по параметру h_y
+        x_range,  # диапазон значений x
+        y_range,  # диапазон значений y
+        h_x,  # длина шага по x
+        h_y,  # длина шага по y
+        h_x_values,  # значения h_x для анализа ошибок
+        h_y_values,  # значения значений h_y для анализа ошибок
 ):
     x = np.arange(*x_range, h_x)
     y = np.arange(*y_range, h_y)
 
-    # Ограничиваем количество возможных значений для улучшения производительности
     max_slices = 100
     if len(x) > max_slices:
         step_x = len(x) // max_slices
@@ -294,11 +299,9 @@ def plot_combined_results_and_errors(
     else:
         y_reduced = y
 
-    # Создаем fig и разбиение на 2х2 подграфика
-    fig, axs = plt.subplots(2, 2, figsize=(15, 10))
-    plt.subplots_adjust(bottom=0.3)
+    fig, axs = plt.subplots(3, 2, figsize=(15, 15))
+    plt.subplots_adjust(bottom=0.35)
 
-    # Линии для интерактивных графиков
     lines_x = []
     lines_y = []
     for method_name, solution in solutions.items():
@@ -308,7 +311,6 @@ def plot_combined_results_and_errors(
         line_y, = axs[0, 1].plot(x, solution[:, 0], label=method_name)
         lines_y.append(line_y)
 
-    # Настройка интерактивных графиков
     axs[0, 0].set_title('u(x, y) при изменяющемся x')
     axs[0, 0].set_xlabel('y')
     axs[0, 0].set_ylabel('u(x, y)')
@@ -319,28 +321,24 @@ def plot_combined_results_and_errors(
     axs[0, 1].set_ylabel('u(x, y)')
     axs[0, 1].legend()
 
-    # Линии для графиков ошибок
     lines_err_y = axs[1, 0]
     lines_err_x = axs[1, 1]
 
     for method_name, solution in solutions.items():
         if method_name == analytical_solution_name:
             continue
-        # График ошибок по y
         max_abs_errors_y = np.array([
             max_abs_error(solution[:, i], solutions[analytical_solution_name][:, i])
             for i in range(len(y))
         ])
         lines_err_y.plot(y, max_abs_errors_y, label=method_name)
 
-        # График ошибок по x
         max_abs_errors_x = np.array([
             max_abs_error(solution[i, :], solutions[analytical_solution_name][i, :])
             for i in range(len(x))
         ])
         lines_err_x.plot(x, max_abs_errors_x, label=method_name)
 
-    # Настройка графиков ошибок
     lines_err_y.set_title('Max abs error по y')
     lines_err_y.set_xlabel('y')
     lines_err_y.set_ylabel('Max abs error')
@@ -353,20 +351,80 @@ def plot_combined_results_and_errors(
     lines_err_x.legend()
     lines_err_x.grid()
 
-    # Создаем ползунки
-    axslider_x = plt.axes([0.15, 0.2, 0.3, 0.03])
-    slider_x = Slider(axslider_x, 'x', 0, len(x_reduced) - 1, valinit=0, valfmt='%d')
+    # Подготовка данных для нового графика ошибок по сетке
+    ax_err_hx = axs[2, 0]
+    ax_err_hx.set_title('Ошибка по h_x')
+    ax_err_hx.set_xlabel('h_x')
+    ax_err_hx.set_ylabel('Ошибка')
 
-    axslider_y = plt.axes([0.55, 0.2, 0.3, 0.03])
-    slider_y = Slider(axslider_y, 'y', 0, len(y_reduced) - 1, valinit=0, valfmt='%d')
+    ax_err_hy = axs[2, 1]
+    ax_err_hy.set_title('Ошибка по h_y')
+    ax_err_hy.set_xlabel('h_y')
+    ax_err_hy.set_ylabel('Ошибка')
 
-    # Функции обновления интерактивных графиков
+    # Ползунки для изменения h_x и h_y
+    axslider_hx = plt.axes([0.15, 0.25, 0.3, 0.03])
+    slider_hx = Slider(axslider_hx, 'h_x', 0, len(h_x_values) - 1, valinit=0, valfmt='%d')
+
+    axslider_hy = plt.axes([0.55, 0.25, 0.3, 0.03])
+    slider_hy = Slider(axslider_hy, 'h_y', 0, len(h_y_values) - 1, valinit=0, valfmt='%d')
+
+    # Обновление графиков ошибок
+    def update_hx(val):
+        hx_idx = int(slider_hx.val)
+        ax_err_hx.cla()
+        x = np.arange(*x_range, h_x_values[hx_idx])
+        for method_name, solution_list in solutions_for_difference_h_x.items():
+            if method_name == analytical_solution_name:
+                continue
+            if hx_idx < len(solution_list):
+                solution_hx = solution_list[hx_idx]
+                analytical_solution = solutions_for_difference_h_x[analytical_solution_name][hx_idx]
+                max_abs_errors_hx = np.array([
+                    max_abs_error(solution_hx[i, :], analytical_solution[i, :])
+                    for i in range(len(x))
+                ])
+                ax_err_hx.plot(x, max_abs_errors_hx, label=method_name)
+        ax_err_hx.legend()
+        ax_err_hx.set_title('Ошибка по h_x')
+        ax_err_hx.set_xlabel('x')
+        ax_err_hx.set_ylabel('Max abs error')
+        slider_hx.valtext.set_text(f'{h_x_values[hx_idx]:.2f}')
+        fig.canvas.draw_idle()
+
+    def update_hy(val):
+        hy_idx = int(slider_hy.val)
+        ax_err_hy.cla()
+        y = np.arange(*y_range, h_y_values[hy_idx])
+        for method_name, solution_list in solutions_for_difference_h_y.items():
+            if method_name == analytical_solution_name:
+                continue
+            if hy_idx < len(solution_list):
+                solution_hy = solution_list[hy_idx]
+                analytical_solution = solutions_for_difference_h_y[analytical_solution_name][hy_idx]
+                max_abs_errors_hy = np.array([
+                    max_abs_error(solution_hy[:, i], analytical_solution[:, i])
+                    for i in range(len(y))
+                ])
+                ax_err_hy.plot(y, max_abs_errors_hy, label=method_name)
+        ax_err_hy.legend()
+        ax_err_hy.set_title('Ошибка по h_y')
+        ax_err_hy.set_xlabel('y')
+        ax_err_hy.set_ylabel('Max abs error')
+        slider_hy.valtext.set_text(f'{h_y_values[hy_idx]:.2f}')
+        fig.canvas.draw_idle()
+
+    slider_hx.on_changed(update_hx)
+    slider_hy.on_changed(update_hy)
+
+    slider_x = Slider(plt.axes([0.15, 0.15, 0.3, 0.03]), 'x', 0, len(x_reduced) - 1, valinit=0, valfmt='%1.2f')
+    slider_y = Slider(plt.axes([0.55, 0.15, 0.3, 0.03]), 'y', 0, len(y_reduced) - 1, valinit=0, valfmt='%1.2f')
+
     def update_x(val):
         x_idx = int(slider_x.val)
         for line, (method_name, solution) in zip(lines_x, solutions.items()):
             line.set_ydata(solution[x_idx, :])
-
-    fig.canvas.draw_idle()
+        fig.canvas.draw_idle()
 
     def update_y(val):
         y_idx = int(slider_y.val)
@@ -374,11 +432,9 @@ def plot_combined_results_and_errors(
             line.set_ydata(solution[:, y_idx])
         fig.canvas.draw_idle()
 
-    # Привязываем функции обновления к событиям изменения состояния ползунков
     slider_x.on_changed(update_x)
     slider_y.on_changed(update_y)
 
-    # Показываем график
     plt.show()
 
 
@@ -431,15 +487,25 @@ def solution(x, y):
               help="коэффициент метода верхней релаксации (для получения просто Зейделя нужен коэффициент = 1), в методе простых итераций не используется")
 @click.option("--eps", default=1e-3, help="точность решения")
 @click.option("--direction_of_traversing_the_matrix", default="↘", help="↘↙↖↗ - всевозможные обходы матрицы")
+@click.option("--h_x_start", default=0.05, help="параметр сетки h_x -- старт отсчета")
+@click.option("--h_y_start", default=0.05, help="параметр сетки h_y -- старт отсчета")
+@click.option("--h_x_end", default=0.5, help="параметр сетки h_x -- конец отсчета")
+@click.option("--h_y_end", default=0.5, help="параметр сетки h_y -- конец отсчета")
+@click.option("--grid_step", default=0.01, help="шаг прохода по мелкости разбиения сетки")
 def main(
-    l_1,
-    l_2,
-    h_x_desired,
-    h_y_desired,
-    init,
-    theta,
-    eps,
-    direction_of_traversing_the_matrix,
+        l_1,
+        l_2,
+        h_x_desired,
+        h_y_desired,
+        init,
+        theta,
+        eps,
+        direction_of_traversing_the_matrix,
+        h_x_start,
+        h_y_start,
+        h_x_end,
+        h_y_end,
+        grid_step,
 ):
     a = 2  # Коэффициент перед ∂u/∂x
     b = 2  # Коэффициент перед ∂u/∂y
@@ -588,6 +654,208 @@ def main(
     print(f'Количество итераций = {relaxation_iters}')
     print()
 
+    solutions_for_difference_h_x = {
+        SolutionMethod.simple: [],
+        SolutionMethod.seidel: [],
+        SolutionMethod.relax: [],
+        SolutionMethod.exact: []
+    }
+    solutions_for_difference_h_y = {
+        SolutionMethod.simple: [],
+        SolutionMethod.seidel: [],
+        SolutionMethod.relax: [],
+        SolutionMethod.exact: []
+    }
+
+    h_x_values = np.arange(h_x_start, h_x_end, grid_step)
+    h_y_values = np.arange(h_y_start, h_y_end, grid_step)
+
+    for h_x_i in h_x_values:
+        iterative_solution, _ = finite_difference_schema_general_view(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x_i,
+            h_y=h_y,
+            a=a,
+            b=b,
+            c=c,
+            f=f,
+            alpha_1=alpha_1,
+            beta_1=beta_1,
+            alpha_2=alpha_2,
+            beta_2=beta_2,
+            alpha_3=alpha_3,
+            beta_3=beta_3,
+            alpha_4=alpha_4,
+            beta_4=beta_4,
+            phi_1=phi_1,
+            phi_2=phi_2,
+            phi_3=phi_3,
+            phi_4=phi_4,
+            method_name=SolutionMethod.simple,
+            initial=init,
+            theta=0,
+            eps=eps,
+            direction_of_traversing_the_matrix=direction_of_traversing_the_matrix,
+        )
+        seidel_solution, _ = finite_difference_schema_general_view(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x_i,
+            h_y=h_y,
+            a=a,
+            b=b,
+            c=c,
+            f=f,
+            alpha_1=alpha_1,
+            beta_1=beta_1,
+            alpha_2=alpha_2,
+            beta_2=beta_2,
+            alpha_3=alpha_3,
+            beta_3=beta_3,
+            alpha_4=alpha_4,
+            beta_4=beta_4,
+            phi_1=phi_1,
+            phi_2=phi_2,
+            phi_3=phi_3,
+            phi_4=phi_4,
+            method_name=SolutionMethod.seidel,
+            initial=init,
+            theta=1,
+            eps=eps,
+            direction_of_traversing_the_matrix=direction_of_traversing_the_matrix,
+        )
+        relaxation_solution, _ = finite_difference_schema_general_view(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x_i,
+            h_y=h_y,
+            a=a,
+            b=b,
+            c=c,
+            f=f,
+            alpha_1=alpha_1,
+            beta_1=beta_1,
+            alpha_2=alpha_2,
+            beta_2=beta_2,
+            alpha_3=alpha_3,
+            beta_3=beta_3,
+            alpha_4=alpha_4,
+            beta_4=beta_4,
+            phi_1=phi_1,
+            phi_2=phi_2,
+            phi_3=phi_3,
+            phi_4=phi_4,
+            method_name=SolutionMethod.relax,
+            initial=init,
+            theta=theta,
+            eps=eps,
+            direction_of_traversing_the_matrix=direction_of_traversing_the_matrix,
+        )
+        analytical_solution = get_analytical_solution(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x_i,
+            h_y=h_y,
+        )
+        solutions_for_difference_h_x[SolutionMethod.simple].append(iterative_solution)
+        solutions_for_difference_h_x[SolutionMethod.seidel].append(seidel_solution)
+        solutions_for_difference_h_x[SolutionMethod.relax].append(relaxation_solution)
+        solutions_for_difference_h_x[SolutionMethod.exact].append(analytical_solution)
+
+    for h_y_j in h_y_values:
+        iterative_solution, _ = finite_difference_schema_general_view(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x,
+            h_y=h_y_j,
+            a=a,
+            b=b,
+            c=c,
+            f=f,
+            alpha_1=alpha_1,
+            beta_1=beta_1,
+            alpha_2=alpha_2,
+            beta_2=beta_2,
+            alpha_3=alpha_3,
+            beta_3=beta_3,
+            alpha_4=alpha_4,
+            beta_4=beta_4,
+            phi_1=phi_1,
+            phi_2=phi_2,
+            phi_3=phi_3,
+            phi_4=phi_4,
+            method_name=SolutionMethod.simple,
+            initial=init,
+            theta=0,
+            eps=eps,
+            direction_of_traversing_the_matrix=direction_of_traversing_the_matrix,
+        )
+        seidel_solution, _ = finite_difference_schema_general_view(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x,
+            h_y=h_y_j,
+            a=a,
+            b=b,
+            c=c,
+            f=f,
+            alpha_1=alpha_1,
+            beta_1=beta_1,
+            alpha_2=alpha_2,
+            beta_2=beta_2,
+            alpha_3=alpha_3,
+            beta_3=beta_3,
+            alpha_4=alpha_4,
+            beta_4=beta_4,
+            phi_1=phi_1,
+            phi_2=phi_2,
+            phi_3=phi_3,
+            phi_4=phi_4,
+            method_name=SolutionMethod.seidel,
+            initial=init,
+            theta=1,
+            eps=eps,
+            direction_of_traversing_the_matrix=direction_of_traversing_the_matrix,
+        )
+        relaxation_solution, _ = finite_difference_schema_general_view(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x,
+            h_y=h_y_j,
+            a=a,
+            b=b,
+            c=c,
+            f=f,
+            alpha_1=alpha_1,
+            beta_1=beta_1,
+            alpha_2=alpha_2,
+            beta_2=beta_2,
+            alpha_3=alpha_3,
+            beta_3=beta_3,
+            alpha_4=alpha_4,
+            beta_4=beta_4,
+            phi_1=phi_1,
+            phi_2=phi_2,
+            phi_3=phi_3,
+            phi_4=phi_4,
+            method_name=SolutionMethod.relax,
+            initial=init,
+            theta=theta,
+            eps=eps,
+            direction_of_traversing_the_matrix=direction_of_traversing_the_matrix,
+        )
+        analytical_solution = get_analytical_solution(
+            x_range=(x_begin, x_end),
+            y_range=(y_begin, y_end),
+            h_x=h_x,
+            h_y=h_y_j,
+        )
+        solutions_for_difference_h_y[SolutionMethod.simple].append(iterative_solution)
+        solutions_for_difference_h_y[SolutionMethod.seidel].append(seidel_solution)
+        solutions_for_difference_h_y[SolutionMethod.relax].append(relaxation_solution)
+        solutions_for_difference_h_y[SolutionMethod.exact].append(analytical_solution)
+
     plot_combined_results_and_errors(
         solutions=solutions_3,
         analytical_solution_name=SolutionMethod.exact,
@@ -595,6 +863,10 @@ def main(
         y_range=(y_begin, y_end),
         h_x=h_x,
         h_y=h_y,
+        solutions_for_difference_h_x=solutions_for_difference_h_x,
+        solutions_for_difference_h_y=solutions_for_difference_h_y,
+        h_x_values=h_x_values,
+        h_y_values=h_y_values
     )
 
 
