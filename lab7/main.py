@@ -299,7 +299,7 @@ def plot_combined_results_and_errors(
     else:
         y_reduced = y
 
-    fig, axs = plt.subplots(3, 2, figsize=(15, 15))
+    fig, axs = plt.subplots(2, 2, figsize=(15, 15))
     plt.subplots_adjust(bottom=0.35)
 
     lines_x = []
@@ -321,43 +321,13 @@ def plot_combined_results_and_errors(
     axs[0, 1].set_ylabel('u(x, y)')
     axs[0, 1].legend()
 
-    lines_err_y = axs[1, 0]
-    lines_err_x = axs[1, 1]
-
-    for method_name, solution in solutions.items():
-        if method_name == analytical_solution_name:
-            continue
-        max_abs_errors_y = np.array([
-            max_abs_error(solution[:, i], solutions[analytical_solution_name][:, i])
-            for i in range(len(y))
-        ])
-        lines_err_y.plot(y, max_abs_errors_y, label=method_name)
-
-        max_abs_errors_x = np.array([
-            max_abs_error(solution[i, :], solutions[analytical_solution_name][i, :])
-            for i in range(len(x))
-        ])
-        lines_err_x.plot(x, max_abs_errors_x, label=method_name)
-
-    lines_err_y.set_title('Max abs error по y')
-    lines_err_y.set_xlabel('y')
-    lines_err_y.set_ylabel('Max abs error')
-    lines_err_y.legend()
-    lines_err_y.grid()
-
-    lines_err_x.set_title('Max abs error по x')
-    lines_err_x.set_xlabel('x')
-    lines_err_x.set_ylabel('Max abs error')
-    lines_err_x.legend()
-    lines_err_x.grid()
-
     # Подготовка данных для нового графика ошибок по сетке
-    ax_err_hx = axs[2, 0]
+    ax_err_hx = axs[1, 0]
     ax_err_hx.set_title('Ошибка по h_x')
     ax_err_hx.set_xlabel('h_x')
     ax_err_hx.set_ylabel('Ошибка')
 
-    ax_err_hy = axs[2, 1]
+    ax_err_hy = axs[1, 1]
     ax_err_hy.set_title('Ошибка по h_y')
     ax_err_hy.set_xlabel('h_y')
     ax_err_hy.set_ylabel('Ошибка')
@@ -466,6 +436,9 @@ def solution(x, y):
     return exp(-x - y) * cos(x) * cos(y)
 
 
+def calc_eps(h_x, h_y):
+    return 1**(-min(h_x, h_y))
+
 """
 система имеет вид:
 
@@ -485,12 +458,12 @@ def solution(x, y):
 @click.option("--init", default=True, help="флаг управления линейной интерполяции неизвестных компонент")
 @click.option("--theta", default=1.5,
               help="коэффициент метода верхней релаксации (для получения просто Зейделя нужен коэффициент = 1), в методе простых итераций не используется")
-@click.option("--eps", default=1e-3, help="точность решения")
+@click.option("--eps", default=1e-7, help="точность решения")
 @click.option("--direction_of_traversing_the_matrix", default="↘", help="↘↙↖↗ - всевозможные обходы матрицы")
 @click.option("--h_x_start", default=0.05, help="параметр сетки h_x -- старт отсчета")
 @click.option("--h_y_start", default=0.05, help="параметр сетки h_y -- старт отсчета")
-@click.option("--h_x_end", default=0.5, help="параметр сетки h_x -- конец отсчета")
-@click.option("--h_y_end", default=0.5, help="параметр сетки h_y -- конец отсчета")
+@click.option("--h_x_end", default=0.1, help="параметр сетки h_x -- конец отсчета")
+@click.option("--h_y_end", default=0.1, help="параметр сетки h_y -- конец отсчета")
 @click.option("--grid_step", default=0.01, help="шаг прохода по мелкости разбиения сетки")
 def main(
         l_1,
